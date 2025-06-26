@@ -18,7 +18,7 @@ type Config struct {
 	HTTPServer  HTTPServer `yaml:"http_server"`
 }
 
-func MustLoadConfig() *Config {
+func MustLoad() *Config {
 	var configPath string
 
 	configPath = os.Getenv("CONFIG_PATH")
@@ -28,11 +28,13 @@ func MustLoadConfig() *Config {
 		var flagPath string
 		flag.StringVar(&flagPath, "config", "", "Path to the configuration file")
 		flag.Parse()
- 
-		if flagPath == "" {
-			log.Fatal("Config path is not set via CONFIG_PATH or --config flag")
+
+		if flagPath != "" {
+			configPath = flagPath
+		} else {
+			// Fallback config path
+			configPath = "./config/config.yaml"
 		}
-		configPath = flagPath
 	}
 
 	// Check file exists
