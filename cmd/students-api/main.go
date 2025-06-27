@@ -9,7 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	config "github.com/0xNaim/students-api/internal"
+	"github.com/0xNaim/students-api/internal/config"
+	"github.com/0xNaim/students-api/internal/http/handlers/student"
 )
 
 func main() {
@@ -19,15 +20,7 @@ func main() {
 
 	// Route setup
 	router := http.NewServeMux()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Welcome to the Students API!")
-	})
+	router.HandleFunc("POST /api/students", student.New())
 
 	// Server setup
 	server := &http.Server{
