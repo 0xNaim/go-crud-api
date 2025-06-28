@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/0xNaim/students-api/internal/storage"
 	"github.com/0xNaim/students-api/internal/types"
@@ -35,7 +36,7 @@ func New(storage storage.Storage) http.HandlerFunc {
 		}
 
 		// Create the student in the storage
-		lastId, err := storage.CreateStudent(student.Name, student.Email, student.Age)
+		_, err = storage.CreateStudent(student.Name, student.Email, student.Age)
 		if err != nil {
 			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
 			return
@@ -48,17 +49,31 @@ func New(storage storage.Storage) http.HandlerFunc {
 
 		response.WriteJson(w, http.StatusCreated, map[string]any{
 			"message": "Student created successfully",
-			"student": struct {
-				ID    int64  `json:"id"`
-				Name  string `json:"name"`
-				Email string `json:"email"`
-				Age   int    `json:"age"`
-			}{
-				ID:    lastId,
-				Name:  student.Name,
-				Email: student.Email,
-				Age:   student.Age,
-			},
+			"student": student,
+		})
+
+	}
+}
+
+func GetByID(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := r.PathValue("id")
+
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(errors.New("invalid student ID")))
+			return
+		}
+
+		student, err := storage.GetStudentByID(id)
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, map[string]any{
+			"message": "Student retrieved successfully",
+			"student": student,
 		})
 
 	}
