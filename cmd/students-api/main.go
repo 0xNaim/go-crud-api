@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,16 +13,24 @@ import (
 
 	"github.com/0xNaim/students-api/internal/config"
 	"github.com/0xNaim/students-api/internal/http/handlers/student"
+	"github.com/0xNaim/students-api/internal/storage/sqlite"
 )
 
 func main() {
 	// Load configuration
 	cfg := config.MustLoad()
-	fmt.Printf("Loaded configuration: %+v\n", cfg)
+
+	// Initialize storage
+	storage, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("Storage initialized successfully", slog.String("storage_type", "sqlite"), slog.String("env", "development"), slog.String("storage_path", cfg.StoragePath))
 
 	// Route setup
 	router := http.NewServeMux()
-	router.HandleFunc("POST /api/students", student.New())
+	router.HandleFunc("POST /api/students", student.New(storage))
 
 	// Server setup
 	server := &http.Server{
