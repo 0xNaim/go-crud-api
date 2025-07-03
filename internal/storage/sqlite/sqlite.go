@@ -99,7 +99,7 @@ func (s *Sqlite) GetAllStudents() ([]types.Student, error) {
 	defer rows.Close()
 
 	var students []types.Student
-	
+
 	for rows.Next() {
 		var student types.Student
 		err = rows.Scan(&student.Id, &student.Name, &student.Email, &student.Age)
@@ -114,4 +114,31 @@ func (s *Sqlite) GetAllStudents() ([]types.Student, error) {
 	}
 
 	return students, nil
+}
+
+func (s *Sqlite) UpdateStudent(id int64, name string, email string, age int) error {
+	stmt, err := s.Db.Prepare("UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?")
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(name, email, age, id)
+
+	if err != nil {
+		return fmt.Errorf("update error: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected error: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no student found with id %d", id)
+	}
+
+	return nil
 }
